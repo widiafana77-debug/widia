@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Waktu Pemupukan Tanaman</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Notifikasi di pojok kanan atas layar */
+        .global-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideInRight 0.3s ease-out;
+            max-width: 260px;
+            word-wrap: break-word;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                right: -100px;
+                opacity: 0;
+            }
+            to {
+                right: 20px;
+                opacity: 1;
+            }
+        }
+
+        .global-toast.hide {
+            animation: slideOutRight 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOutRight {
+            from {
+                right: 20px;
+                opacity: 1;
+            }
+            to {
+                right: -100px;
+                opacity: 0;
+            }
+        }
+
+        /* Izin notifikasi banner */
+        .notification-permission {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            z-index: 9998;
+            cursor: pointer;
+            display: none;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .notification-permission button {
+            background: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: #ff9800;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            padding: 25px 20px 15px 20px;
+            background: white;
+            position: relative;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-small {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .app-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #66bb6a;
+            text-transform: lowercase;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 1.3rem;
+            color: #2e7d32;
+            text-transform: lowercase;
+        }
+
+        .calendar-icon-header {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            font-size: 1.6rem;
+            color: #4caf50;
+            cursor: pointer;
+        }
+
+        .month-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f1f8e9;
+        }
+
+        .month-nav-btn {
+            background: #4caf50;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .month-nav-btn:hover {
+            background: #2e7d32;
+            transform: scale(1.05);
+        }
+
+        .current-month-year {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .calendar-container {
+            padding: 10px 15px 20px 15px;
+            background: white;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .calendar-grid {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .calendar-grid th {
+            padding: 12px 5px;
+            color: #4caf50;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: #f1f8e9;
+        }
+
+        .calendar-grid td {
+            padding: 12px 5px;
+            border: 1px solid #e8e8e8;
+            color: #333;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .calendar-grid td:hover {
+            background: #c8e6c9;
+            transform: scale(0.96);
+        }
+
+        .calendar-grid td.selected {
+            background: #4caf50;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .calendar-grid td.fertilized {
+            background: #81c784;
+            color: white;
+            position: relative;
+        }
+
+        .calendar-grid td.fertilized::after {
+            content: "✓";
+            position: absolute;
+            bottom: 2px;
+            right: 5px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .calendar-grid td.empty {
+            background: #fafafa;
+            cursor: default;
+        }
+
+        .calendar-grid td.empty:hover {
+            background: #fafafa;
+            transform: none;
+        }
+
+        .select-date-text {
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background: #e8f5e9;
+            border-radius: 20px;
+            color: #2e7d32;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .select-date-text:hover {
+            background: #c8e6c9;
+        }
+
+        .fertilizer-note-section {
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff3e0;
+            border-radius: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .fertilizer-note-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: #e65100;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .fertilizer-note-header i {
+            font-size: 1.1rem;
+        }
+
+        .fertilizer-note-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ffe0b2;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            background: white;
+        }
+
+        .fertilizer-note-input:focus {
+            border-color: #ff9800;
+        }
+
+        .selected-date-info {
+            font-size: 0.75rem;
+            color: #ff9800;
+            margin-top: 5px;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: white;
+            padding: 10px 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #757575;
+            transition: all 0.2s;
+            padding: 6px 10px;
+            border-radius: 30px;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+        }
+
+        .nav-item span {
+            font-size: 0.65rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .page-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .middle-content {
+            flex: 1;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tambah-box {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 30px;
+        }
+
+        .tambah-text {
+            background: #e8f5e9;
+            border: 2px dashed #4caf50;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            color: #4caf50;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .tambah-text:hover {
+            background: #c8e6c9;
+        }
+
+        .input-nama {
+            background: white;
+            border: 2px solid #4caf50;
+            border-radius: 20px;
+            padding: 15px;
+        }
+
+        .nama-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #c8e6c9;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .simpan-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .daftar-tanaman {
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .tanaman-item {
+            background: #f1f8e9;
+            border-radius: 15px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tanaman-item i {
+            color: #4caf50;
+            font-size: 1.2rem;
+        }
+
+        .tanaman-item span {
+            flex: 1;
+            font-size: 1rem;
+        }
+
+        .hapus-tanaman {
+            background: none;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .konten-utama {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .daftar-catatan {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .catatan-card {
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 15px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .catatan-foto {
+            margin-bottom: 10px;
+        }
+
+        .catatan-foto img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .catatan-teks {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .catatan-tanggal {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .hapus-catatan {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .fab-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #4caf50;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 15px;
+            background: #4caf50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .catatan-input-modal {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #c8e6c9;
+            border-radius: 10px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .foto-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .preview-foto img {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .tanggal-info {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .settings-container {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f1f8e9;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-left: auto;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4caf50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .time-setting-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-label {
+            font-size: 1rem;
+            color: #333;
+            text-transform: lowercase;
+        }
+
+        .time-display-btn {
+            background: #e8f5e9;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4caf50;
+        }
+
+        .time-value {
+            font-weight: bold;
+        }
+
+        .time-modal {
+            max-width: 300px;
+        }
+
+        .time-modal-body {
+            text-align: center;
+        }
+
+        .time-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .time-input {
+            width: 60px;
+            padding: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 2px solid #c8e6c9;
+            border-radius: 10px;
+        }
+
+        .time-separator {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .time-modal-footer {
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .batal-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Halaman Index dengan Kalender -->
+        <div id="indexPage" class="page-container">
+            <div class="header">
+                <h1 class="app-title">waktu pemupukan tanaman</h1>
+                <div class="calendar-icon-header" data-nav="tanaman">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+            
+            <div class="month-navigation">
+                <button id="prevMonth" class="month-nav-btn"><i class="fas fa-chevron-left"></i></button>
+                <span id="currentMonthYear" class="current-month-year">Juni 2026</span>
+                <button id="nextMonth" class="month-nav-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+
+            <div class="calendar-container">
+                <div id="calendarBody"></div>
+                
+                <div class="fertilizer-note-section" id="fertilizerNoteSection">
+                    <div class="fertilizer-note-header">
+                        <i class="fas fa-seedling"></i>
+                        <span>Catatan Pemupukan</span>
+                    </div>
+                    <textarea id="fertilizerNoteInput" class="fertilizer-note-input" rows="2" placeholder="Tulis catatan pemupukan di sini..."></textarea>
+                    <div id="selectedDateInfo" class="selected-date-info"></div>
+                </div>
+                
+                <div class="select-date-text" id="openNoteBtn">
+                    <i class="fas fa-pen"></i> Klik untuk menulis catatan pemupukan
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button class="nav-item active" data-page="index"><i class="fas fa-home"></i><span>Beranda</span></button>
+                <button class="nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>
+                <button class="nav-item" data-page="catatan"><i class="fas fa-pencil-alt"></i><span>Catatan</span></button>
+                <button class="nav-item" data-page="pengaturan"><i class="fas fa-cog"></i><span>Pengaturan</span></button>
+            </div>
+        </div>
+
+        <!-- Halaman Tanaman -->
+        <div id="tanamanPage" class="page-container hidden">
+            <div class="header-small">
+                <h2 class="page-title">tanaman</h2>
+            </div>
+            <div class="middle-content">
+                <div class="tambah-box">
+                    <div id="tambahText" class="tambah-text">
+                        <i class="fas fa-plus-circle"></i> tambah
+                    </div>
+                    <div id="inputNamaTanaman" class="input-nama hidden">
+                        <input type="text" id="namaTanamanInput" class="nama-input" placeholder="Nama tanaman...">
+                        <button id="simpanNamaBtn" class="simpan-btn">Simpan</button>
+                    </div>
+                </div>
+                <div id="daftarTanaman" class="daftar-tanaman"></div>
+            </div>
+            <div class="bottom-nav">
+                <button class="nav-item" data-page="index"><i class="fas fa-home"></i><span>Beranda</span></button>
+                <button class="nav-item active" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>
+                <button class="nav-item" data-page="catatan"><i class="fas fa-pencil-alt"></i><span>Catatan</span></button>
+                <button class="nav-item" data-page="pengaturan"><i class="fas fa-cog"></i><span>Pengaturan</span></button>
+            </div>
+        </div>
+
+        <!-- Halaman Catatan -->
+        <div id="catatanPage" class="page-container hidden">
+            <div class="header-small">
+                <h2 class="page-title">catatan</h2>
+            </div>
+            <div class="konten-utama">
+                <div id="daftarCatatan" class="daftar-catatan"></div>
+            </div>
+            <button id="btnTambah" class="fab-btn"><i class="fas fa-plus"></i></button>
+            <div class="bottom-nav">
+                <button class="nav-item" data-page="index"><i class="fas fa-home"></i><span>Beranda</span></button>
+                <button class="nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>
+                <button class="nav-item active" data-page="catatan"><i class="fas fa-pencil-alt"></i><span>Catatan</span></button>
+                <button class="nav-item" data-page="pengaturan"><i class="fas fa-cog"></i><span>Pengaturan</span></button>
+            </div>
+        </div>
+
+        <!-- Halaman Pengaturan -->
+        <div id="pengaturanPage" class="page-container hidden">
+            <div class="header-small">
+                <h2 class="page-title">pengaturan</h2>
+            </div>
+            <div class="settings-container">
+                <div class="setting-item">
+                    <i class="fas fa-bell"></i>
+                    <span>waktu pemberitahuan</span>
+                    <label class="switch">
+                        <input type="checkbox" id="notifToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="time-setting-card">
+                    <div class="time-label">pagi</div>
+                    <button class="time-display-btn" data-time="pagi">
+                        <span id="pagiTime" class="time-value">07:00</span>
+                        <i class="fas fa-clock"></i>
+                    </button>
+                </div>
+                <div class="time-setting-card">
+                    <div class="time-label">sore</div>
+                    <button class="time-display-btn" data-time="sore">
+                        <span id="soreTime" class="time-value">15:00</span>
+                        <i class="fas fa-clock"></i>
+                    </button>
+                </div>
+                <div class="time-setting-card">
+                    <div class="time-label">malam</div>
+                    <button class="time-display-btn" data-time="malam">
+                        <span id="malamTime" class="time-value">20:00</span>
+                        <i class="fas fa-clock"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="bottom-nav">
+                <button class="nav-item" data-page="index"><i class="fas fa-home"></i><span>Beranda</span></button>
+                <button class="nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>
+                <button class="nav-item" data-page="catatan"><i class="fas fa-pencil-alt"></i><span>Catatan</span></button>
+                <button class="nav-item active" data-page="pengaturan"><i class="fas fa-cog"></i><span>Pengaturan</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner izin notifikasi -->
+    <div id="notificationBanner" class="notification-permission">
+        <span>🔔 Izinkan notifikasi untuk mendapatkan pengingat pemupukan</span>
+        <button id="enableNotificationBtn">Izinkan</button>
+    </div>
+
+    <!-- Modal Catatan -->
+    <div id="modalTambah" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Catatan</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="catatanInput" class="catatan-input-modal" placeholder="Tulis catatanmu di sini..."></textarea>
+                <div class="foto-wrapper">
+                    <button id="ambilFotoBtn" class="foto-btn">
+                        <i class="fas fa-camera"></i> 📷 Ambil Foto
+                    </button>
+                    <div id="previewFoto" class="preview-foto hidden"></div>
+                </div>
+                <div class="tanggal-info">
+                    <i class="fas fa-calendar-day"></i> <span id="tanggalHariIni"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="batalModalBtn" class="batal-btn">Batal</button>
+                <button id="simpanModalBtn" class="simpan-btn">+ Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Waktu -->
+    <div id="timeModal" class="modal hidden">
+        <div class="modal-content time-modal">
+            <div class="modal-header">
+                <h3>masukkan waktu</h3>
+            </div>
+            <div class="modal-body time-modal-body">
+                <div class="time-selector">
+                    <div class="time-input-group">
+                        <input type="number" id="jamInput" class="time-input" min="0" max="23" value="07" placeholder="HH">
+                        <span class="time-separator">:</span>
+                        <input type="number" id="menitInput" class="time-input" min="0" max="59" value="00" placeholder="MM">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer time-modal-footer">
+                <button id="batalTimeBtn" class="batal-btn">batal</button>
+                <button id="okeTimeBtn" class="simpan-btn">oke</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== NOTIFIKASI SISTEM ====================
+        let notificationPermissionGranted = false;
+        let notificationInterval = null;
+        let lastNotifiedTime = { pagi: '', sore: '', malam: '' };
+
+        // Minta izin notifikasi
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    notificationPermissionGranted = true;
+                    document.getElementById('notificationBanner').style.display = 'none';
+                    showToast('🔔 Notifikasi diaktifkan! Anda akan mendapat pengingat pemupukan');
+                    return true;
+                } else {
+                    showToast('⚠️ Izin notifikasi diperlukan untuk pengingat pemupukan');
+                    return false;
+                }
+            } else {
+                showToast('⚠️ Browser Anda tidak mendukung notifikasi');
+                return false;
+            }
+        }
+
+        // Kirim notifikasi sistem
+        function sendSystemNotification(title, body, timeType) {
+            if (notificationPermissionGranted && 'Notification' in window) {
+                // Cek apakah notifikasi sudah pernah dikirim di menit ini
+                const now = new Date();
+                const currentKey = `${timeType}_${now.getHours()}_${now.getMinutes()}`;
+                if (lastNotifiedTime[timeType] === currentKey) {
+                    return; // Sudah terkirim, jangan kirim lagi
+                }
+                lastNotifiedTime[timeType] = currentKey;
+                
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/svgs/solid/seedling.svg',
+                    badge: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/svgs/solid/bell.svg',
+                    vibrate: [200, 100, 200],
+                    silent: false
+                });
+                
+                // Bunyi alarm (opsional)
+                const audio = new Audio('data:audio/wav;base64,U3RlYWx0aCBub3RpZmljYXRpb24gc291bmQ=');
+                audio.play().catch(e => console.log('Audio tidak bisa diputar'));
+                
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+                
+                setTimeout(() => notification.close(), 10000);
+            }
+        }
+
+        // Notifikasi toast di dalam app
+        function showToast(message) {
+            const existingToast = document.querySelector('.global-toast');
+            if (existingToast) existingToast.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'global-toast';
+            toast.innerHTML = `🔔 ${message}`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // ==================== ALARM CHECK ====================
+        function checkAndTriggerAlarm() {
+            const now = new Date();
+            const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const notifEnabled = localStorage.getItem('notifEnabled') === 'true';
+            
+            if (notifEnabled && notificationPermissionGranted) {
+                // Cek waktu pagi
+                if (currentTime === waktuSettings.pagi && lastNotifiedTime.pagi !== `${currentTime}_${now.getMinutes()}`) {
+                    sendSystemNotification('🌱 Waktu Pemupukan Tanaman', 'Pagi: Waktunya memberi pupuk pada tanaman!', 'pagi');
+                    showToast('🌱 Pagi: Waktunya memberi pupuk pada tanaman!');
+                }
+                // Cek waktu sore
+                if (currentTime === waktuSettings.sore && lastNotifiedTime.sore !== `${currentTime}_${now.getMinutes()}`) {
+                    sendSystemNotification('🌱 Waktu Pemupukan Tanaman', 'Sore: Waktunya memberi pupuk pada tanaman!', 'sore');
+                    showToast('🌱 Sore: Waktunya memberi pupuk pada tanaman!');
+                }
+                // Cek waktu malam
+                if (currentTime === waktuSettings.malam && lastNotifiedTime.malam !== `${currentTime}_${now.getMinutes()}`) {
+                    sendSystemNotification('🌱 Waktu Pemupukan Tanaman', 'Malam: Waktunya memberi pupuk pada tanaman!', 'malam');
+                    showToast('🌱 Malam: Waktunya memberi pupuk pada tanaman!');
+                }
+            }
+        }
+
+        // ==================== VARIABEL GLOBAL ====================
+        const bulanIndonesia = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const hariIndonesia = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+        let currentDate = new Date(2026, 5, 1);
+        let selectedDateGlobal = localStorage.getItem('selectedDateGlobal') || null;
+        
+        let fertilizerData = JSON.parse(localStorage.getItem('fertilizerData')) || {};
+        let tanamanList = JSON.parse(localStorage.getItem('tanamanList')) || [];
+        let catatanList = JSON.parse(localStorage.getItem('catatanList')) || [];
+        let fotoData = null;
+
+        let waktuSettings = JSON.parse(localStorage.getItem('waktuSettings')) || {
+            pagi: '07:00',
+            sore: '15:00',
+            malam: '20:00'
+        };
+        let currentTimeType = null;
+
+        // ==================== KALENDER ====================
+        function generateCalendar(year, month) {
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            const startDayOfWeek = firstDayOfMonth.getDay();
+            
+            let tableHTML = '<table class="calendar-grid">';
+            tableHTML += '<thead><tr>';
+            for (let i = 0; i < hariIndonesia.length; i++) {
+                tableHTML += `<th>${hariIndonesia[i]}</th>`;
+            }
+            tableHTML += '</tr></thead><tbody>';
+            
+            let dateCounter = 1;
+            for (let week = 0; week < 6; week++) {
+                tableHTML += '<tr>';
+                for (let day = 0; day < 7; day++) {
+                    if ((week === 0 && day < startDayOfWeek) || dateCounter > daysInMonth) {
+                        tableHTML += '<td class="empty"></td>';
+                    } else {
+                        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dateCounter).padStart(2,'0')}`;
+                        const isSelected = (selectedDateGlobal === dateStr);
+                        const isFertilized = fertilizerData[dateStr] && fertilizerData[dateStr].note ? 'fertilized' : '';
+                        const selectedClass = isSelected ? 'selected' : '';
+                        tableHTML += `<td class="date ${selectedClass} ${isFertilized}" data-date="${dateStr}" data-day="${dateCounter}">${dateCounter}${isFertilized ? ' ✓' : ''}</td>`;
+                        dateCounter++;
+                    }
+                }
+                tableHTML += '</tr>';
+                if (dateCounter > daysInMonth) break;
+            }
+            tableHTML += '</tbody></table>';
+            document.getElementById('currentMonthYear').innerText = `${bulanIndonesia[month]} ${year}`;
+            return tableHTML;
+        }
+        
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const calendarHTML = generateCalendar(year, month);
+            document.getElementById('calendarBody').innerHTML = calendarHTML;
+            
+            document.querySelectorAll('.date').forEach(el => {
+                el.addEventListener('click', function() {
+                    document.querySelectorAll('.date').forEach(d => d.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    const dayNumber = this.getAttribute('data-day');
+                    const monthName = bulanIndonesia[currentDate.getMonth()];
+                    const yearNum = currentDate.getFullYear();
+                    const dateValue = this.getAttribute('data-date');
+                    
+                    selectedDateGlobal = dateValue;
+                    localStorage.setItem('selectedDateGlobal', selectedDateGlobal);
+                    localStorage.setItem('selectedFertilizerDate', dateValue);
+                    
+                    const existingNote = fertilizerData[dateValue] ? fertilizerData[dateValue].note : '';
+                    const noteInput = document.getElementById('fertilizerNoteInput');
+                    const dateInfo = document.getElementById('selectedDateInfo');
+                    
+                    if (noteInput) {
+                        noteInput.value = existingNote;
+                        dateInfo.innerHTML = `<i class="fas fa-calendar-day"></i> 📅 Tanggal: ${dayNumber} ${monthName} ${yearNum}`;
+                    }
+                    
+                    showToast(`📅 Tanggal ${dayNumber} ${monthName} ${yearNum} dipilih!`);
+                });
+            });
+            
+            if (selectedDateGlobal && fertilizerData[selectedDateGlobal]) {
+                const noteInput = document.getElementById('fertilizerNoteInput');
+                const dateInfo = document.getElementById('selectedDateInfo');
+                if (noteInput) {
+                    noteInput.value = fertilizerData[selectedDateGlobal].note || '';
+                    const [year, month, day] = selectedDateGlobal.split('-');
+                    dateInfo.innerHTML = `<i class="fas fa-calendar-day"></i> 📅 Tanggal: ${parseInt(day)} ${bulanIndonesia[parseInt(month)-1]} ${year}`;
+                }
+            }
+        }
+        
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+        
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function saveFertilizerNote() {
+            if (!selectedDateGlobal) {
+                showToast('Pilih tanggal terlebih dahulu!');
+                return;
+            }
+            
+            const noteInput = document.getElementById('fertilizerNoteInput');
+            const note = noteInput.value.trim();
+            
+            if (note) {
+                fertilizerData[selectedDateGlobal] = {
+                    note: note,
+                    date: selectedDateGlobal,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('fertilizerData', JSON.stringify(fertilizerData));
+                showToast(`✅ Catatan pemupukan untuk tanggal ${selectedDateGlobal} telah tersimpan!`);
+                renderCalendar();
+            } else if (fertilizerData[selectedDateGlobal]) {
+                delete fertilizerData[selectedDateGlobal];
+                localStorage.setItem('fertilizerData', JSON.stringify(fertilizerData));
+                showToast(`🗑️ Catatan pemupukan untuk tanggal ${selectedDateGlobal} telah dihapus`);
+                renderCalendar();
+            } else {
+                showToast('📝 Silakan tulis catatan pemupukan terlebih dahulu!');
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId + 'Page').classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-page') === pageId) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            if (pageId === 'tanaman') renderDaftarTanaman();
+            if (pageId === 'catatan') renderDaftarCatatan();
+            if (pageId === 'index') renderCalendar();
+        }
+
+        function renderDaftarTanaman() {
+            const container = document.getElementById('daftarTanaman');
+            if (!container) return;
+            container.innerHTML = '';
+            tanamanList.forEach((tanaman, index) => {
+                const tanamanItem = document.createElement('div');
+                tanamanItem.className = 'tanaman-item';
+                tanamanItem.innerHTML = `
+                    <i class="fas fa-leaf"></i>
+                    <span>${escapeHtml(tanaman.nama)}</span>
+                    <button class="hapus-tanaman" data-index="${index}"><i class="fas fa-trash"></i></button>
+                `;
+                container.appendChild(tanamanItem);
+            });
+            document.querySelectorAll('.hapus-tanaman').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = btn.getAttribute('data-index');
+                    tanamanList.splice(index, 1);
+                    localStorage.setItem('tanamanList', JSON.stringify(tanamanList));
+                    renderDaftarTanaman();
+                    showToast(`🌱 Tanaman berhasil dihapus`);
+                });
+            });
+        }
+
+        function getTanggalHariIni() {
+            const today = new Date();
+            const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return `${today.getDate()} ${bulan[today.getMonth()]} ${today.getFullYear()}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderDaftarCatatan() {
+            const container = document.getElementById('daftarCatatan');
+            if (!container) return;
+            container.innerHTML = '';
+            catatanList.forEach((catatan, index) => {
+                const card = document.createElement('div');
+                card.className = 'catatan-card';
+                let fotoHTML = catatan.foto ? `<div class="catatan-foto"><img src="${catatan.foto}" alt="Foto"></div>` : '';
+                card.innerHTML = `
+                    ${fotoHTML}
+                    <div class="catatan-teks">${escapeHtml(catatan.teks)}</div>
+                    <div class="catatan-tanggal"><i class="fas fa-calendar-alt"></i> ${catatan.tanggal}</div>
+                    <button class="hapus-catatan" data-index="${index}"><i class="fas fa-trash"></i></button>
+                `;
+                container.appendChild(card);
+            });
+            document.querySelectorAll('.hapus-catatan').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = btn.getAttribute('data-index');
+                    catatanList.splice(index, 1);
+                    localStorage.setItem('catatanList', JSON.stringify(catatanList));
+                    renderDaftarCatatan();
+                    showToast(`📝 Catatan berhasil dihapus`);
+                });
+            });
+        }
+
+        function updateTimeDisplays() {
+            const pagiSpan = document.getElementById('pagiTime');
+            const soreSpan = document.getElementById('soreTime');
+            const malamSpan = document.getElementById('malamTime');
+            if (pagiSpan) pagiSpan.textContent = waktuSettings.pagi;
+            if (soreSpan) soreSpan.textContent = waktuSettings.sore;
+            if (malamSpan) malamSpan.textContent = waktuSettings.malam;
+        }
+
+        function saveWaktuSetting(timeType, newTime) {
+            waktuSettings[timeType] = newTime;
+            localStorage.setItem('waktuSettings', JSON.stringify(waktuSettings));
+            updateTimeDisplays();
+            
+            let waktuText = '';
+            if (timeType === 'pagi') waktuText = 'Pagi';
+            else if (timeType === 'sore') waktuText = 'Sore';
+            else waktuText = 'Malam';
+            showToast(`⏰ Waktu ${waktuText} telah diatur ke ${newTime}`);
+            
+            // Reset lastNotifiedTime untuk waktu yang diubah
+            lastNotifiedTime[timeType] = '';
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Cek izin notifikasi
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    notificationPermissionGranted = true;
+                    document.getElementById('notificationBanner').style.display = 'none';
+                } else if (Notification.permission !== 'denied') {
+                    document.getElementById('notificationBanner').style.display = 'flex';
+                }
+            }
+            
+            // Tombol izinkan notifikasi
+            const enableBtn = document.getElementById('enableNotificationBtn');
+            if (enableBtn) {
+                enableBtn.addEventListener('click', requestNotificationPermission);
+            }
+            
+            // Navigasi
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const page = btn.getAttribute('data-page');
+                    showPage(page);
+                });
+            });
+            
+            document.querySelectorAll('[data-nav]').forEach(el => {
+                el.addEventListener('click', () => {
+                    showPage('tanaman');
+                });
+            });
+            
+            const prevBtn = document.getElementById('prevMonth');
+            const nextBtn = document.getElementById('nextMonth');
+            if (prevBtn) prevBtn.addEventListener('click', prevMonth);
+            if (nextBtn) nextBtn.addEventListener('click', nextMonth);
+            
+            const fertilizerNoteInput = document.getElementById('fertilizerNoteInput');
+            if (fertilizerNoteInput) {
+                fertilizerNoteInput.addEventListener('blur', saveFertilizerNote);
+            }
+            
+            const openNoteBtn = document.getElementById('openNoteBtn');
+            if (openNoteBtn) {
+                openNoteBtn.addEventListener('click', () => {
+                    if (fertilizerNoteInput) fertilizerNoteInput.focus();
+                });
+            }
+            
+            const catatanText = document.getElementById('catatanText');
+            if (catatanText) {
+                const savedNote = localStorage.getItem('userNote');
+                if (savedNote) catatanText.value = savedNote;
+                catatanText.addEventListener('input', () => {
+                    localStorage.setItem('userNote', catatanText.value);
+                });
+            }
+            
+            // Tambah Tanaman
+            const tambahText = document.getElementById('tambahText');
+            const inputNamaTanaman = document.getElementById('inputNamaTanaman');
+            const namaTanamanInput = document.getElementById('namaTanamanInput');
+            const simpanNamaBtn = document.getElementById('simpanNamaBtn');
+            
+            if (tambahText) {
+                tambahText.addEventListener('click', () => {
+                    tambahText.classList.add('hidden');
+                    inputNamaTanaman.classList.remove('hidden');
+                    namaTanamanInput.focus();
+                });
+            }
+            
+            if (simpanNamaBtn) {
+                simpanNamaBtn.addEventListener('click', () => {
+                    const namaTanaman = namaTanamanInput.value.trim();
+                    if (namaTanaman) {
+                        tanamanList.push({ nama: namaTanaman });
+                        localStorage.setItem('tanamanList', JSON.stringify(tanamanList));
+                        renderDaftarTanaman();
+                        namaTanamanInput.value = '';
+                        showToast(`🌱 Tanaman "${namaTanaman}" berhasil ditambahkan!`);
+                    }
+                    tambahText.classList.remove('hidden');
+                    inputNamaTanaman.classList.add('hidden');
+                });
+            }
+            
+            if (namaTanamanInput) {
+                namaTanamanInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') simpanNamaBtn.click();
+                });
+            }
+            
+            // Modal Catatan
+            const modal = document.getElementById('modalTambah');
+            const btnTambah = document.getElementById('btnTambah');
+            const closeModal = document.querySelector('.close-modal');
+            const batalModal = document.getElementById('batalModalBtn');
+            const simpanModal = document.getElementById('simpanModalBtn');
+            const catatanInput = document.getElementById('catatanInput');
+            const ambilFotoBtn = document.getElementById('ambilFotoBtn');
+            const previewFoto = document.getElementById('previewFoto');
+            const tanggalSpan = document.getElementById('tanggalHariIni');
+            
+            if (tanggalSpan) tanggalSpan.textContent = getTanggalHariIni();
+            
+            if (btnTambah) {
+                btnTambah.addEventListener('click', () => {
+                    modal.classList.remove('hidden');
+                    catatanInput.value = '';
+                    fotoData = null;
+                    previewFoto.classList.add('hidden');
+                    previewFoto.innerHTML = '';
+                });
+            }
+            
+            function closeModalFunc() { modal.classList.add('hidden'); }
+            if (closeModal) closeModal.addEventListener('click', closeModalFunc);
+            if (batalModal) batalModal.addEventListener('click', closeModalFunc);
+            
+            if (simpanModal) {
+                simpanModal.addEventListener('click', () => {
+                    const teks = catatanInput.value.trim();
+                    if (teks) {
+                        catatanList.push({ teks: teks, foto: fotoData, tanggal: getTanggalHariIni() });
+                        localStorage.setItem('catatanList', JSON.stringify(catatanList));
+                        renderDaftarCatatan();
+                        closeModalFunc();
+                        showToast('📝 Catatan berhasil disimpan!');
+                    } else {
+                        showToast('⚠️ Silakan tulis catatan terlebih dahulu!');
+                    }
+                });
+            }
+            
+            if (ambilFotoBtn) {
+                ambilFotoBtn.addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                fotoData = e.target.result;
+                                previewFoto.innerHTML = `<img src="${fotoData}" alt="Preview">`;
+                                previewFoto.classList.remove('hidden');
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                });
+            }
+            
+            // Pengaturan Waktu
+            const timeModal = document.getElementById('timeModal');
+            const jamInput = document.getElementById('jamInput');
+            const menitInput = document.getElementById('menitInput');
+            const batalTimeBtn = document.getElementById('batalTimeBtn');
+            const okeTimeBtn = document.getElementById('okeTimeBtn');
+            const notifToggle = document.getElementById('notifToggle');
+            
+            updateTimeDisplays();
+            
+            let notifEnabled = localStorage.getItem('notifEnabled') === 'true';
+            if (notifToggle) notifToggle.checked = notifEnabled;
+            if (notifToggle) {
+                notifToggle.addEventListener('change', () => {
+                    localStorage.setItem('notifEnabled', notifToggle.checked);
+                    if (notifToggle.checked) {
+                        showToast('🔔 Pemberitahuan diaktifkan!');
+                    } else {
+                        showToast('🔕 Pemberitahuan dinonaktifkan!');
+                    }
+                });
+            }
+            
+            function openTimeModal(timeType, currentTime) {
+                currentTimeType = timeType;
+                const [jam, menit] = currentTime.split(':');
+                if (jamInput) jamInput.value = parseInt(jam);
+                if (menitInput) menitInput.value = parseInt(menit);
+                if (timeModal) timeModal.classList.remove('hidden');
+            }
+            
+            function closeTimeModal() {
+                if (timeModal) timeModal.classList.add('hidden');
+                currentTimeType = null;
+            }
+            
+            document.querySelectorAll('.time-display-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const timeType = btn.getAttribute('data-time');
+                    openTimeModal(timeType, waktuSettings[timeType]);
+                });
+            });
+            
+            if (batalTimeBtn) batalTimeBtn.addEventListener('click', closeTimeModal);
+            
+            if (okeTimeBtn) {
+                okeTimeBtn.addEventListener('click', () => {
+                    let jam = parseInt(jamInput.value);
+                    let menit = parseInt(menitInput.value);
+                    if (isNaN(jam)) jam = 0;
+                    if (isNaN(menit)) menit = 0;
+                    jam = Math.max(0, Math.min(23, jam));
+                    menit = Math.max(0, Math.min(59, menit));
+                    const newTime = `${jam.toString().padStart(2, '0')}:${menit.toString().padStart(2, '0')}`;
+                    if (currentTimeType) {
+                        saveWaktuSetting(currentTimeType, newTime);
+                    }
+                    closeTimeModal();
+                });
+            }
+            
+            if (timeModal) {
+                window.addEventListener('click', (e) => {
+                    if (e.target === timeModal) closeTimeModal();
+                });
+            }
+            
+            // Jalankan pengecekan alarm setiap 30 detik
+            setInterval(checkAndTriggerAlarm, 30000);
+            checkAndTriggerAlarm();
+            
+            showPage('index');
+        });
+    </script>
+</body>
+</html>
